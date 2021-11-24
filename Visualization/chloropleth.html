@@ -57,6 +57,7 @@ var svg = d3.select("body")
 
 // Load in my states data!
 d3.csv("statesdata.csv", function(data) {
+	//console.log(data)
 	var dataArray = [];
 	for (var d = 0; d < data.length; d++) {
 		dataArray.push(parseFloat(data[d].value))
@@ -66,7 +67,9 @@ d3.csv("statesdata.csv", function(data) {
 	var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
 
   // Load GeoJSON data and merge with states data
-  d3.json("us-states.json", function(json) {
+
+
+  d3.json("/visualization/us-states.json", function(json) {
 
     // Loop through each state data value in the .csv file
     for (var i = 0; i < data.length; i++) {
@@ -100,7 +103,24 @@ d3.csv("statesdata.csv", function(data) {
       .attr("d", path)
       .style("stroke", "#fff")
       .style("stroke-width", "1")
-      .style("fill", function(d) { return ramp(d.properties.value) });
+      .style("fill", function(d) { 
+      	state = d.properties.NAME
+
+      	var list_value = data.filter(dict => {
+          if (dict.state == state){
+              return dict
+          }
+        })
+
+        if (list_value.length > 0) {
+        	return ramp(list_value[0].value)
+        }
+        else {
+        	return "#808080"
+        }
+      })
+
+      	//return ramp(value[0].value)});
 
 		// add a legend
 		var w = 140, h = 300;

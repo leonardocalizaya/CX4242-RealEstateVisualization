@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
 <style type="text/css">
 
 /* Legend Font Style */
@@ -56,22 +56,25 @@ var svg = d3.select("body")
   .attr("height", height);
 
 // Load in my states data!
-d3.csv("statesdata.csv", function(data) {
-	//console.log(data)
-	var dataArray = [];
-	for (var d = 0; d < data.length; d++) {
-		dataArray.push(parseFloat(data[d].value))
-	}
-	var minVal = d3.min(dataArray)
-	var maxVal = d3.max(dataArray)
-	var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
+Promise.all([
+  	d3.json("/visualization/us-states.json"),
+  	d3.csv("/visualization/statesdata.csv"),
+  	d3.csv("/data/State_MedianRentalPrice_1Bedroom.csv"),
+  	d3.csv("/data/State_MedianRentalPrice_2Bedroom.csv"),
+  	d3.csv("/data/State_MedianRentalPrice_3Bedroom.csv"),
+  	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
+  	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv")
+	]).then(([json, data, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
 
-  // Load GeoJSON data and merge with states data
+		var dataArray = [];
+		for (var d = 0; d < data.length; d++) {
+			dataArray.push(parseFloat(data[d].value))
+		}
+		var minVal = d3.min(dataArray)
+		var maxVal = d3.max(dataArray)
+		var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
 
-
-  d3.json("/visualization/us-states.json", function(json) {
-
-    // Loop through each state data value in the .csv file
+		// Loop through each state data value in the .csv file
     for (var i = 0; i < data.length; i++) {
 
       // Grab State Name
@@ -120,8 +123,6 @@ d3.csv("statesdata.csv", function(data) {
         }
       })
 
-      	//return ramp(value[0].value)});
-
 		// add a legend
 		var w = 140, h = 300;
 
@@ -166,8 +167,9 @@ d3.csv("statesdata.csv", function(data) {
 			.attr("class", "y axis")
 			.attr("transform", "translate(41,10)")
 			.call(yAxis)
-  });
-});
+
+
+  	})
 </script>
 </body>
 </html>

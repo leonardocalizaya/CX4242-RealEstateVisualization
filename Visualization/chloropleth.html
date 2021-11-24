@@ -37,8 +37,8 @@ body {
 var width = 960;
 var height = 500;
 
-var lowColor = '#f9f9f9'
-var highColor = '#bc2a66'
+var lowColor = '#AEE6B1'
+var highColor = '#14BC1C'
 
 // D3 Projection
 var projection = d3.geoAlbersUsa()
@@ -55,6 +55,9 @@ var svg = d3.select("body")
   .attr("width", width)
   .attr("height", height);
 
+
+ var timeConv = d3.timeParse("%Y-%m")
+
 // Load in my states data!
 Promise.all([
   	d3.json("/visualization/us-states.json"),
@@ -65,6 +68,27 @@ Promise.all([
   	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv")
 	]).then(([json, data, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
+
+		//Date formats:
+
+		rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed]
+
+		nondate_col = ["RegionName", "SizeRank", ""]
+
+		rental_files.forEach(function(file){
+			file.forEach(function(row_data){
+				keys = Object.keys(row_data)
+
+				keys.forEach(function(key){
+					if (nondate_col.includes(key)) {
+					}
+					else {
+						row_data[timeConv(key)] = row_data[key]
+						delete row_data[key]
+					}
+				})
+			})
+		})
 
 		var dataArray = [];
 		for (var d = 0; d < data.length; d++) {
@@ -97,7 +121,6 @@ Promise.all([
         }
       }
     }
-    console.log(json.features)
 
     // Bind the data to the SVG and create one path per GeoJSON feature
     svg.selectAll("path")

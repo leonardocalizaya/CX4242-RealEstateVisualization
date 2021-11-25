@@ -30,6 +30,16 @@ body {
 	stroke: #000;
 	shape-rendering: crispEdges;
 }
+	/* define CSS rules here */
+	.d3-tip {
+		line-height: 1;
+		font-weight: bold;
+		padding: 12px;
+		background: rgba(0, 0, 0, 0.8);
+		color: #fff;
+		border-radius: 2px;
+		white-space: pre-line;
+	}
 
 </style>
 </head>
@@ -95,6 +105,13 @@ function onChangeBedroom() {
 	var bedSelected = d3.select("#selectBedroom").property("value");
 	//console.log("Bedroom: " + bedSelected)
 }
+
+var tooltip = d3.tip()
+.attr("class", "d3-tip")
+.attr("id", "tooltip")
+.offset([0, 0])
+.style('z-index', '999999999');
+svg.call(tooltip);
 
 var timeConv = d3.timeParse("%Y-%m")
 
@@ -162,6 +179,17 @@ Promise.all([
       })
       .on("mouseover", function(d) {
       	createLinechart(d)
+
+	      var x = d3.event.x,
+			  y = d3.event.y;
+			  var state = d.properties.NAME;
+			  var value = d.properties.value;
+			  var html = "State: " + state;
+			  html += "\nValue: " + value;
+			  tooltip.html(html);
+			  tooltip.style("top", y + "px");
+			  tooltip.style("left", x + "px");
+			  tooltip.show();
       })
       .on("mouseout", function(d){
       	linechart.remove()

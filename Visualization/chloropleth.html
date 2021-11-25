@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="lib/d3.v5.min.js"></script>
+<script type="text/javascript" src="lib/d3-dsv.min.js"></script>
+<script type="text/javascript" src="lib/d3-legend.min.js"></script>
+<script type="text/javascript" src="lib/d3-tip.min.js"></script>
 <style type="text/css">
 
 /* Legend Font Style */
@@ -55,8 +58,41 @@ var svg = d3.select("body")
   .attr("width", width)
   .attr("height", height);
 
+var selectBedroom = d3.select("body").append("select")
+				.attr("class", "select")
+				.attr("id", "selectBedroom")
+				.on("change", onChangeBedroom);
+var roomOptions = ["1 bedroom", "2 bedrooms", "3 bedrooms", "4 bedrooms", "5 or more bedrooms"];
+var optionsBedroom = selectBedroom
+  .selectAll('option')
+	.data(roomOptions).enter()
+	.append('option')
+		.text(function (d) { return d; });
 
- var timeConv = d3.timeParse("%Y-%m")
+var selectYear = d3.select("body")
+				   .append("select")
+				   .attr("class", "select")
+				   .attr("id", "selectYear")
+				   .on("change", onChangeYear)
+var yearOptions = []
+for (var year = 2000; year <= 2025; year++) {
+	yearOptions[yearOptions.length] = year;
+}
+var optionsYear = selectYear.selectAll("option")
+							.data(yearOptions).enter()
+							.append("option")
+							.text(function(d) { return (d + ""); })
+
+function onChangeYear() {
+	var yearSelected = d3.select("#selectYear").property("value");
+	console.log("Year: " + yearSelected)
+}
+function onChangeBedroom() {
+	var bedSelected = d3.select("#selectBedroom").property("value");
+	console.log("Bedroom: " + bedSelected)
+}
+
+var timeConv = d3.timeParse("%Y-%m")
 
 // Load in my states data!
 Promise.all([
@@ -130,7 +166,7 @@ Promise.all([
       .attr("d", path)
       .style("stroke", "#fff")
       .style("stroke-width", "1")
-      .style("fill", function(d) { 
+      .style("fill", function(d) {
       	return ramp(d.properties.value)
       })
 
@@ -181,6 +217,7 @@ Promise.all([
 
 
   	})
+
 </script>
 </body>
 </html>

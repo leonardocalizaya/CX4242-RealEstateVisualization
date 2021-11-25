@@ -37,8 +37,12 @@ body {
 <script type="text/javascript">
 
 //Width and height of map
-var width = 960;
-var height = 500;
+var margin = {top: 20, right: 20, bottom: 30, left: 50}
+
+var width = 1200 - margin.left - margin.right;
+var height = 500 - margin.top - margin.bottom;
+
+
 
 var lowColor = '#AEE6B1'
 var highColor = '#14BC1C'
@@ -85,11 +89,11 @@ var optionsYear = selectYear.selectAll("option")
 
 function onChangeYear() {
 	var yearSelected = d3.select("#selectYear").property("value");
-	console.log("Year: " + yearSelected)
+	//console.log("Year: " + yearSelected)
 }
 function onChangeBedroom() {
 	var bedSelected = d3.select("#selectBedroom").property("value");
-	console.log("Bedroom: " + bedSelected)
+	//console.log("Bedroom: " + bedSelected)
 }
 
 var timeConv = d3.timeParse("%Y-%m")
@@ -105,26 +109,13 @@ Promise.all([
   	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv")
 	]).then(([json, data, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
 
+		//console.log(one_bed)
 		//Date formats:
 
-		rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed]
+    rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed] 
+		rental_dict = {"1 bedroom": one_bed, "2 bedrooms": two_bed, "3 bedrooms":three_bed, "4 bedrooms": four_bed, "5 or more bedrooms": five_bed}
 
 		nondate_col = ["RegionName", "SizeRank", ""]
-
-		rental_files.forEach(function(file){
-			file.forEach(function(row_data){
-				keys = Object.keys(row_data)
-
-				keys.forEach(function(key){
-					if (nondate_col.includes(key)) {
-					}
-					else {
-						row_data[timeConv(key)] = row_data[key]
-						delete row_data[key]
-					}
-				})
-			})
-		})
 
 		var dataArray = [];
 		for (var d = 0; d < data.length; d++) {
@@ -169,6 +160,80 @@ Promise.all([
       .style("fill", function(d) {
       	return ramp(d.properties.value)
       })
+      .on("mouseover", function(d) {
+      	createLinechart(d)
+      })
+      .on("mouseout", function(d){
+      	linechart.remove()
+      })
+
+
+     //Creates linechart for historial median prices
+     function createLinechart(json) {
+      	var body = d3.select("body")
+
+        var linechart = body.append("svg")
+          .attr("id", "linechart")
+          .attr("width", width)
+          .attr("height", height+60)
+          .attr("transform", "translate(" + 0+ "," + margin.top + ")")
+
+        bedroom_type = document.getElementById("selectBedroom").value
+
+        var data = rental_dict[bedroom_type].find(x=> x.RegionName === json.properties.NAME)
+
+        var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
+
+        data.forEach(function(p){
+        	p.date = timeConv(p.date)
+        	p.value = +p.value
+        })
+        data.splice(0, 3)
+
+        //console.log(data)
+
+        var x = d3.scaleTime()
+        	.domain(d3.extent(data, function(d) {return d.date}))
+        	.range([0, width])
+
+       	var y = d3.scaleLinear()
+       		.domain([0, d3.max(data, function(d){return +d.value})])
+       		.range([height, 0])
+
+        var g = linechart.append("g")
+
+        g.append("g")
+        	.call(d3.axisBottom(x))
+        	.attr("transform", "translate(" + margin.left + "," + (height+margin.top) + ")")
+
+        g.append("g")
+        	.call(d3.axisLeft(y))
+        	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+        var lines = g.append("g")
+        	.attr("id", "lines")
+        	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+        lines.append("path")
+        	.datum(data)
+        	.attr("stroke", "black")
+        	.attr("fill", "none")
+        	.attr("stroke-width", 1.5)
+        	.attr("d", d3.line()
+        			.x(function(d) {return x(d.date)})
+        			.y(function(d) {return y(d.value)})
+        	)
+
+        var area = d3.area()
+			    .x(function(d) { return x(d.date); })
+			    .y0(height)
+			    .y1(function(d) { return y(d.value); });
+
+			  lines.append("path")
+	       .data([data])
+	       .attr("fill", "steelblue")
+	       .attr("d", area);
+      }
 
 		// add a legend
 		var w = 140, h = 300;

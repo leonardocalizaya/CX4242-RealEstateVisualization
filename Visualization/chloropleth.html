@@ -52,8 +52,8 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50}
 var width = 1200 - margin.left - margin.right;
 var height = 500 - margin.top - margin.bottom;
 
-var lcwidth = 650 - margin.left - margin.right
-var lcheight = 200 - margin.top - margin.bottom
+var lcwidth = 600 - margin.left - margin.right
+var lcheight = 190 - margin.top - margin.bottom
 
 
 var lowColor = '#AEE6B1'
@@ -68,11 +68,7 @@ var projection = d3.geoAlbersUsa()
 var path = d3.geoPath() // path generator that will convert GeoJSON to SVG paths
   .projection(projection); // tell path generator to use albersUsa projection
 
-//Create SVG element and append map to the SVG
-var svg = d3.select("body")
-  .append("svg")
-  .attr("width", width)
-  .attr("height", height);
+
 
 var selectBedroom = d3.select("body").append("select")
 				.attr("class", "select")
@@ -105,8 +101,14 @@ function onChangeYear() {
 }
 function onChangeBedroom() {
 	var bedSelected = d3.select("#selectBedroom").property("value");
-	//console.log("Bedroom: " + bedSelected)
+	console.log("Bedroom: " + bedSelected)
 }
+
+//Create SVG element and append map to the SVG
+var svg = d3.select("body")
+  .append("svg")
+  .attr("width", width)
+  .attr("height", height);
 
 var tooltip = d3.tip()
 .attr("class", "d3-tip")
@@ -116,6 +118,8 @@ var tooltip = d3.tip()
 svg.call(tooltip);
 
 var timeConv = d3.timeParse("%Y-%m")
+
+
 
 // Load in my states data!
 Promise.all([
@@ -204,8 +208,8 @@ Promise.all([
 
         var linechart = body.append("svg")
           .attr("id", "linechart")
-          .attr("width", lcwidth)
-          .attr("height", lcheight)
+          .attr("width", lcwidth + margin.left)
+          .attr("height", lcheight + margin.bottom + 40)
           .attr("transform", "translate(" + 0+ "," + margin.top + ")")
 
         bedroom_type = document.getElementById("selectBedroom").value

@@ -52,6 +52,8 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50}
 var width = 1200 - margin.left - margin.right;
 var height = 500 - margin.top - margin.bottom;
 
+var lcwidth = 650 - margin.left - margin.right
+var lcheight = 200 - margin.top - margin.bottom
 
 
 var lowColor = '#AEE6B1'
@@ -202,8 +204,8 @@ Promise.all([
 
         var linechart = body.append("svg")
           .attr("id", "linechart")
-          .attr("width", width)
-          .attr("height", height+60)
+          .attr("width", lcwidth)
+          .attr("height", lcheight)
           .attr("transform", "translate(" + 0+ "," + margin.top + ")")
 
         bedroom_type = document.getElementById("selectBedroom").value
@@ -222,17 +224,17 @@ Promise.all([
 
         var x = d3.scaleTime()
         	.domain(d3.extent(data, function(d) {return d.date}))
-        	.range([0, width])
+        	.range([0, lcwidth])
 
        	var y = d3.scaleLinear()
        		.domain([0, d3.max(data, function(d){return +d.value})])
-       		.range([height, 0])
+       		.range([lcheight, 0])
 
         var g = linechart.append("g")
 
         g.append("g")
         	.call(d3.axisBottom(x))
-        	.attr("transform", "translate(" + margin.left + "," + (height+margin.top) + ")")
+        	.attr("transform", "translate(" + margin.left + "," + (lcheight+margin.top) + ")")
 
         g.append("g")
         	.call(d3.axisLeft(y))
@@ -254,7 +256,7 @@ Promise.all([
 
         var area = d3.area()
 			    .x(function(d) { return x(d.date); })
-			    .y0(height)
+			    .y0(lcheight)
 			    .y1(function(d) { return y(d.value); });
 
 			  lines.append("path")

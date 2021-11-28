@@ -184,6 +184,7 @@ Promise.all([
       	return ramp(d.properties.value)
       })
       .on("mouseover", function(d) {
+      	d3.select(this).style("fill", "steelblue")
       	createLinechart(d)
 
 	      var x = d3.event.x,
@@ -198,6 +199,7 @@ Promise.all([
 			  tooltip.show();
       })
       .on("mouseout", function(d){
+      	d3.select(this).style("fill", ramp(d.properties.value))
       	linechart.remove()
       })
 

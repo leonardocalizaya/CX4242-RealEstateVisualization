@@ -212,9 +212,11 @@ Promise.all([
           .attr("height", lcheight + margin.bottom + 40)
           .attr("transform", "translate(" + 0+ "," + margin.top + ")")
 
-        bedroom_type = document.getElementById("selectBedroom").value
+        var bedroom_type = document.getElementById("selectBedroom").value
 
-        var data = rental_dict[bedroom_type].find(x=> x.RegionName === json.properties.NAME)
+        var state = json.properties.NAME
+
+        var data = rental_dict[bedroom_type].find(x=> x.RegionName === state)
 
         var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
 
@@ -267,6 +269,35 @@ Promise.all([
 	       .data([data])
 	       .attr("fill", "steelblue")
 	       .attr("d", area);
+
+	      var title = g.append("g")
+			    .attr("id", "line_chart_title")
+			    .attr("transform", "translate(" + (margin.left + lcwidth/2) + "," + margin.top + ")")
+
+			  title.append("text")
+			    .attr("text-anchor", "middle")
+			    .style("font-size", "12px")
+			    .text("Median rental prices: " + state + " - " + bedroom_type)
+
+			  // y-axis label 
+        ylabel = g.append("g")
+          .attr("id", "bar_y_axis_label")
+          .attr("transform", "translate(" + (margin.left - 40) + "," + (margin.top + lcheight/2) + ")")
+
+        ylabel.append("text")
+          .attr("transform", "rotate(-90)")
+          .text("Median rental price")
+          .style("text-anchor", "middle")
+          
+
+        //x-axis label
+        xlabel = g.append("g")
+          .attr("id", "bar_x_axis_label")
+          .attr("transform", "translate(" + (lcwidth/2 + margin.left) + "," + (margin.bottom + lcheight + 20) + ")")
+
+        xlabel.append("text")
+          .text("Year")
+          .style("text-anchor", "middle")
       }
 
 		// add a legend

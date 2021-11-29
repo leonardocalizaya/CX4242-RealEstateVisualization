@@ -70,39 +70,7 @@ var path = d3.geoPath() // path generator that will convert GeoJSON to SVG paths
 
 
 
-var selectBedroom = d3.select("body").append("select")
-				.attr("class", "select")
-				.attr("id", "selectBedroom")
-				.on("change", onChangeBedroom);
-var roomOptions = ["1 bedroom", "2 bedrooms", "3 bedrooms", "4 bedrooms", "5 or more bedrooms"];
-var optionsBedroom = selectBedroom
-  .selectAll('option')
-	.data(roomOptions).enter()
-	.append('option')
-		.text(function (d) { return d; });
 
-var selectYear = d3.select("body")
-				   .append("select")
-				   .attr("class", "select")
-				   .attr("id", "selectYear")
-				   .on("change", onChangeYear)
-var yearOptions = []
-for (var year = 2000; year <= 2025; year++) {
-	yearOptions[yearOptions.length] = year;
-}
-var optionsYear = selectYear.selectAll("option")
-							.data(yearOptions).enter()
-							.append("option")
-							.text(function(d) { return (d + ""); })
-
-function onChangeYear() {
-	var yearSelected = d3.select("#selectYear").property("value");
-	//console.log("Year: " + yearSelected)
-}
-function onChangeBedroom() {
-	var bedSelected = d3.select("#selectBedroom").property("value");
-	console.log("Bedroom: " + bedSelected)
-}
 
 //Create SVG element and append map to the SVG
 var svg = d3.select("body")
@@ -135,7 +103,7 @@ Promise.all([
 		//console.log(one_bed)
 		//Date formats:
 
-    rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed] 
+    rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed]
 		rental_dict = {"1 bedroom": one_bed, "2 bedrooms": two_bed, "3 bedrooms":three_bed, "4 bedrooms": four_bed, "5 or more bedrooms": five_bed}
 
 		nondate_col = ["RegionName", "SizeRank", ""]
@@ -171,38 +139,6 @@ Promise.all([
         }
       }
     }
-
-    // Bind the data to the SVG and create one path per GeoJSON feature
-    svg.selectAll("path")
-      .data(json.features)
-      .enter()
-      .append("path")
-      .attr("d", path)
-      .style("stroke", "#fff")
-      .style("stroke-width", "1")
-      .style("fill", function(d) {
-      	return ramp(d.properties.value)
-      })
-      .on("mouseover", function(d) {
-      	d3.select(this).style("fill", "steelblue")
-      	createLinechart(d)
-
-	      var x = d3.event.x,
-			  y = d3.event.y;
-			  var state = d.properties.NAME;
-			  var value = d.properties.value;
-			  var html = "State: " + state;
-			  html += "\nValue: " + value;
-			  tooltip.html(html);
-			  tooltip.style("top", y + "px");
-			  tooltip.style("left", x + "px");
-			  tooltip.show();
-      })
-      .on("mouseout", function(d){
-      	d3.select(this).style("fill", ramp(d.properties.value))
-      	linechart.remove()
-      })
-
 
      //Creates linechart for historial median prices
      function createLinechart(json) {
@@ -281,7 +217,7 @@ Promise.all([
 			    .style("font-size", "12px")
 			    .text("Median rental prices: " + state + " - " + bedroom_type)
 
-			  // y-axis label 
+			  // y-axis label
         ylabel = g.append("g")
           .attr("id", "bar_y_axis_label")
           .attr("transform", "translate(" + (margin.left - 40) + "," + (margin.top + lcheight/2) + ")")
@@ -290,7 +226,7 @@ Promise.all([
           .attr("transform", "rotate(-90)")
           .text("Median rental price")
           .style("text-anchor", "middle")
-          
+
 
         //x-axis label
         xlabel = g.append("g")
@@ -347,6 +283,111 @@ Promise.all([
 			.attr("transform", "translate(41,10)")
 			.call(yAxis)
 
+
+		var selectBedroom = d3.select("body").append("select")
+						.attr("class", "select")
+						.attr("id", "selectBedroom")
+						.on("change", reColorMap);
+		var roomOptions = ["1 bedroom", "2 bedrooms", "3 bedrooms", "4 bedrooms", "5 or more bedrooms"];
+		var optionsBedroom = selectBedroom
+		  .selectAll('option')
+			.data(roomOptions).enter()
+			.append('option')
+				.text(function (d) { return d; });
+
+		var selectYear = d3.select("body")
+						   .append("select")
+						   .attr("class", "select")
+						   .attr("id", "selectYear")
+						   .on("change", reColorMap)
+		var yearOptions = []
+		for (var year = 2000; year <= 2025; year++) {
+			yearOptions[yearOptions.length] = year;
+		}
+		var optionsYear = selectYear.selectAll("option")
+									.data(yearOptions).enter()
+									.append("option")
+									.text(function(d) { return (d + ""); })
+								
+
+		function reColorMap() {
+			var yearSelected = d3.select("#selectYear").property("value");
+			var bedSelected = d3.select("#selectBedroom").property("value");
+			console.log(yearSelected);
+			console.log(bedSelected);
+			file = rental_dict[bedSelected];
+			//console.log(file);
+			var values_dict = {};
+			var dataArray = []
+			for (let i = 0; i < file.length; i++) {
+				var state = file[i]["RegionName"]
+				var sum = 0;
+				var num_entries = 0;
+				var months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+				for (let j = 0; j < months.length; j++) {
+					var check =  yearSelected + "-" + months[j];
+					//console.log(check);
+					if (check in file[i] && file[i][check] != "") {
+						//console.log(file[i][check])
+						sum += parseFloat(file[i][check]);
+						num_entries++;
+					}
+				}
+				var avg;
+				if (num_entries == 0) {
+					avg = undefined;
+				} else {
+					avg = sum / num_entries;
+				}
+				values_dict[state] = avg;
+				dataArray[dataArray.length] = avg;
+			}
+			console.log(values_dict);
+			//console.log(json.features[0].properties.NAME);
+
+			for (let i = 0; i < json.features.length; i++) {
+				var state = json.features[i].properties.NAME;
+				json.features[i].properties.value = values_dict[state];
+			}
+
+			console.log(json.features);
+
+
+			d3.selectAll("#map").remove();
+			var minVal = d3.min(dataArray)
+			var maxVal = d3.max(dataArray)
+			var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
+			svg.selectAll("path")
+		      .data(json.features)
+		      .enter()
+		      .append("path")
+		      .attr("d", path)
+			  .attr("id", "map")
+		      .style("stroke", "#fff")
+		      .style("stroke-width", "1")
+		      .style("fill", function(d) {
+		      	return ramp(d.properties.value)
+		      })
+		      .on("mouseover", function(d) {
+		      	d3.select(this).style("fill", "steelblue")
+		      	createLinechart(d)
+
+			      var x = d3.event.x,
+					  y = d3.event.y;
+					  var state = d.properties.NAME;
+					  var value = d.properties.value;
+					  var html = "State: " + state;
+					  html += "\nValue: " + value;
+					  tooltip.html(html);
+					  tooltip.style("top", y + "px");
+					  tooltip.style("left", x + "px");
+					  tooltip.show();
+		      })
+		      .on("mouseout", function(d){
+		      	d3.select(this).style("fill", ramp(d.properties.value))
+		      	linechart.remove()
+		      })
+		}
 
   	})
 

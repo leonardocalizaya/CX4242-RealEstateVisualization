@@ -68,7 +68,7 @@ h3 {
 	<h1>The U.S. Housing Price Forecasting Visualization</h1>
 	<p></p>
 	<h2>Select the year and number of bedrooms below</h2>
-	<h3>Team #4 The Underdogs: William Lusty, Leonardo Caliza, Matthew Pleskow, Haoxuan Huang, Michael Cho, Jun Hyuk Jeon</h3>
+	<h3>Team #4 The Underdogs: William Lusty, Leonardo Calizaya, Matthew Pleskow, Haoxuan Huang, Michael Cho, Jun Hyuk Jeon</h3>
 <script type="text/javascript">
 
 //Width and height of map
@@ -93,22 +93,22 @@ var projection = d3.geoAlbersUsa()
 var path = d3.geoPath() // path generator that will convert GeoJSON to SVG paths
   .projection(projection); // tell path generator to use albersUsa projection
 
-
-
-
-
 //Create SVG element and append map to the SVG
 var svg = d3.select("body")
   .append("svg")
+  .attr("id", "svg")
   .attr("width", width)
   .attr("height", height);
 
+var map = svg.append("svg").
+	attr("id", "map")
+
 var tooltip = d3.tip()
-.attr("class", "d3-tip")
-.attr("id", "tooltip")
-.offset([0, 0])
-.style('z-index', '999999999');
-svg.call(tooltip);
+	.attr("class", "d3-tip")
+	.attr("id", "tooltip")
+	.offset([0, 0])
+	.style('z-index', '999999999');
+	map.call(tooltip);
 
 var timeConv = d3.timeParse("%Y-%m")
 
@@ -123,10 +123,35 @@ Promise.all([
   	d3.csv("/data/State_MedianRentalPrice_3Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv")
-	]).then(([json, data, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
-
-		//console.log(one_bed)
+	]).then(([world, data, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
 		//Date formats:
+
+
+		var selectBedroom = d3.select("body").append("select")
+						.attr("class", "select")
+						.attr("id", "selectBedroom")
+						.on("change", reColorMap);
+		var roomOptions = ["1 bedroom", "2 bedrooms", "3 bedrooms", "4 bedrooms", "5 or more bedrooms"];
+		var optionsBedroom = selectBedroom
+		  .selectAll('option')
+			.data(roomOptions).enter()
+			.append('option')
+				.text(function (d) { return d; });
+
+		var selectYear = d3.select("body")
+						   .append("select")
+						   .attr("class", "select")
+						   .attr("id", "selectYear")
+						   .on("change", reColorMap)
+		var yearOptions = []
+		for (var year = 2000; year <= 2025; year++) {
+			yearOptions[yearOptions.length] = year;
+		}
+		var optionsYear = selectYear.selectAll("option")
+									.data(yearOptions).enter()
+									.append("option")
+									.text(function(d) { return (d + ""); })
+
 
     rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed]
 		rental_dict = {"1 bedroom": one_bed, "2 bedrooms": two_bed, "3 bedrooms":three_bed, "4 bedrooms": four_bed, "5 or more bedrooms": five_bed}
@@ -151,13 +176,13 @@ Promise.all([
       var dataValue = data[i].value;
 
       // Find the corresponding state inside the GeoJSON
-      for (var j = 0; j < json.features.length; j++) {
-        var jsonState = json.features[j].properties.NAME;
+      for (var j = 0; j < world.features.length; j++) {
+        var worldState = world.features[j].properties.NAME;
 
-        if (dataState == jsonState) {
+        if (dataState == worldState) {
 
           // Copy the data value into the JSON
-          json.features[j].properties.value = dataValue;
+          world.features[j].properties.value = dataValue;
 
           // Stop looking through the JSON
           break;
@@ -165,8 +190,10 @@ Promise.all([
       }
     }
 
+    reColorMap()
+
      //Creates linechart for historial median prices
-     function createLinechart(json) {
+     function createLinechart(world) {
       	var body = d3.select("body")
 
         var linechart = body.append("svg")
@@ -177,7 +204,7 @@ Promise.all([
 
         var bedroom_type = document.getElementById("selectBedroom").value
 
-        var state = json.properties.NAME
+        var state = world.properties.NAME
 
         var data = rental_dict[bedroom_type].find(x=> x.RegionName === state)
 
@@ -188,8 +215,6 @@ Promise.all([
         	p.value = +p.value
         })
         data.splice(0, 3)
-
-        //console.log(data)
 
         var x = d3.scaleTime()
         	.domain(d3.extent(data, function(d) {return d.date}))
@@ -263,85 +288,11 @@ Promise.all([
           .style("text-anchor", "middle")
       }
 
-		// add a legend
-		var w = 140, h = 300;
-
-		var key = d3.select("body")
-			.append("svg")
-			.attr("width", w)
-			.attr("height", h)
-			.attr("class", "legend");
-
-		var legend = key.append("defs")
-			.append("svg:linearGradient")
-			.attr("id", "gradient")
-			.attr("x1", "100%")
-			.attr("y1", "0%")
-			.attr("x2", "100%")
-			.attr("y2", "100%")
-			.attr("spreadMethod", "pad");
-
-		legend.append("stop")
-			.attr("offset", "0%")
-			.attr("stop-color", highColor)
-			.attr("stop-opacity", 1);
-
-		legend.append("stop")
-			.attr("offset", "100%")
-			.attr("stop-color", lowColor)
-			.attr("stop-opacity", 1);
-
-		key.append("rect")
-			.attr("width", w - 100)
-			.attr("height", h)
-			.style("fill", "url(#gradient)")
-			.attr("transform", "translate(0,10)");
-
-		var y = d3.scaleLinear()
-			.range([h, 0])
-			.domain([minVal, maxVal]);
-
-		var yAxis = d3.axisRight(y);
-
-		key.append("g")
-			.attr("class", "y axis")
-			.attr("transform", "translate(41,10)")
-			.call(yAxis)
-
-
-		var selectBedroom = d3.select("body").append("select")
-						.attr("class", "select")
-						.attr("id", "selectBedroom")
-						.on("change", reColorMap);
-		var roomOptions = ["1 bedroom", "2 bedrooms", "3 bedrooms", "4 bedrooms", "5 or more bedrooms"];
-		var optionsBedroom = selectBedroom
-		  .selectAll('option')
-			.data(roomOptions).enter()
-			.append('option')
-				.text(function (d) { return d; });
-
-		var selectYear = d3.select("body")
-						   .append("select")
-						   .attr("class", "select")
-						   .attr("id", "selectYear")
-						   .on("change", reColorMap)
-		var yearOptions = []
-		for (var year = 2000; year <= 2025; year++) {
-			yearOptions[yearOptions.length] = year;
-		}
-		var optionsYear = selectYear.selectAll("option")
-									.data(yearOptions).enter()
-									.append("option")
-									.text(function(d) { return (d + ""); })
-
 
 		function reColorMap() {
 			var yearSelected = d3.select("#selectYear").property("value");
 			var bedSelected = d3.select("#selectBedroom").property("value");
-			console.log(yearSelected);
-			console.log(bedSelected);
 			file = rental_dict[bedSelected];
-			//console.log(file);
 			var values_dict = {};
 			var dataArray = []
 			for (let i = 0; i < file.length; i++) {
@@ -351,9 +302,7 @@ Promise.all([
 				var months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
 				for (let j = 0; j < months.length; j++) {
 					var check =  yearSelected + "-" + months[j];
-					//console.log(check);
 					if (check in file[i] && file[i][check] != "") {
-						//console.log(file[i][check])
 						sum += parseFloat(file[i][check]);
 						num_entries++;
 					}
@@ -367,54 +316,102 @@ Promise.all([
 				values_dict[state] = avg;
 				dataArray[dataArray.length] = avg;
 			}
-			console.log(values_dict);
-			//console.log(json.features[0].properties.NAME);
 
-			for (let i = 0; i < json.features.length; i++) {
-				var state = json.features[i].properties.NAME;
-				json.features[i].properties.value = values_dict[state];
+			for (let i = 0; i < world.features.length; i++) {
+				var state = world.features[i].properties.NAME;
+				world.features[i].properties.value = values_dict[state];
 			}
 
-			console.log(json.features);
-
-
 			d3.selectAll("#map").remove();
+			createMap(dataArray, world)
+			
+		}
+
+
+		function createMap(dataArray, world){
 			var minVal = d3.min(dataArray)
 			var maxVal = d3.max(dataArray)
 			var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
-			svg.selectAll("path")
-		      .data(json.features)
-		      .enter()
-		      .append("path")
-		      .attr("d", path)
-			  .attr("id", "map")
-		      .style("stroke", "#fff")
-		      .style("stroke-width", "1")
-		      .style("fill", function(d) {
-		      	return ramp(d.properties.value)
-		      })
-		      .on("mouseover", function(d) {
-		      	d3.select(this).style("fill", "steelblue")
-		      	createLinechart(d)
 
-			      var x = d3.event.x,
-					  y = d3.event.y;
-					  var state = d.properties.NAME;
-					  var value = d.properties.value;
-					  var html = "State: " + state;
-					  html += "\nValue: " + value;
-					  tooltip.html(html);
-					  tooltip.style("top", y + "px");
-					  tooltip.style("left", x + "px");
-					  tooltip.show();
-		      })
-		      .on("mouseout", function(d){
-		      	d3.select(this).style("fill", ramp(d.properties.value))
-		      	linechart.remove()
-		      })
+			var map = svg.append("svg")
+				.attr("id", "map")
+
+			map.selectAll("path")
+	      .data(world.features)
+	      .enter()
+	      .append("path")
+	      .attr("d", path)
+	      .style("stroke", "#fff")
+	      .style("stroke-width", "1")
+	      .style("fill", function(d) {
+	      	return ramp(d.properties.value)
+	      })
+	      .on("mouseover", function(d) {
+	      	d3.select(this).style("fill", "steelblue")
+	      	createLinechart(d)
+
+		      var x = d3.event.x,
+				  y = d3.event.y;
+				  var state = d.properties.NAME;
+				  var value = d.properties.value;
+				  var html = "State: " + state;
+				  html += "\nValue: " + value;
+				  tooltip.html(html);
+				  tooltip.style("top", y + "px");
+				  tooltip.style("left", x + "px");
+				  tooltip.show();
+	      })
+	      .on("mouseout", function(d){
+	      	d3.select(this).style("fill", ramp(d.properties.value))
+	      	linechart.remove()
+	      })
+
+		  var w = 140, h = 300;
+
+			var key = map.append("svg")
+				.attr("width", w)
+				.attr("height", h)
+				.attr("class", "legend");
+
+			var legend = key.append("defs")
+				.append("svg:linearGradient")
+				.attr("id", "gradient")
+				.attr("x1", "100%")
+				.attr("y1", "0%")
+				.attr("x2", "100%")
+				.attr("y2", "100%")
+				.attr("spreadMethod", "pad");
+
+			legend.append("stop")
+				.attr("offset", "0%")
+				.attr("stop-color", highColor)
+				.attr("stop-opacity", 1);
+
+			legend.append("stop")
+				.attr("offset", "100%")
+				.attr("stop-color", lowColor)
+				.attr("stop-opacity", 1);
+
+			key.append("rect")
+				.attr("width", w - 100)
+				.attr("height", h)
+				.style("fill", "url(#gradient)")
+				.attr("transform", "translate(0,10)");
+
+			var y = d3.scaleLinear()
+				.range([h, 0])
+				.domain([minVal, maxVal]);
+
+			var yAxis = d3.axisRight(y);
+
+			key.append("g")
+				.attr("class", "y axis")
+				.attr("transform", "translate(41,10)")
+				.call(yAxis)
+
 		}
 
-  	})
+  })
 
 </script>
 </body>

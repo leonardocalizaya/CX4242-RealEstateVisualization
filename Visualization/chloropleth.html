@@ -324,7 +324,7 @@ Promise.all([
 
 			d3.selectAll("#map").remove();
 			createMap(dataArray, world)
-			
+
 		}
 
 
@@ -355,7 +355,7 @@ Promise.all([
 				  var state = d.properties.NAME;
 				  var value = d.properties.value;
 				  var html = "State: " + state;
-				  html += "\nValue: " + value;
+				  html += "\nMedian Rental Price: " + value;
 				  tooltip.html(html);
 				  tooltip.style("top", y + "px");
 				  tooltip.style("left", x + "px");
@@ -363,7 +363,8 @@ Promise.all([
 	      })
 	      .on("mouseout", function(d){
 	      	d3.select(this).style("fill", ramp(d.properties.value))
-	      	linechart.remove()
+	      	linechart.remove();
+			tooltip.hide();
 	      })
 
 		  var w = 140, h = 300;

@@ -44,6 +44,7 @@ body {
 </style>
 </head>
 <body>
+	<h1>Select The Year and Number of bedrooms below</h1>
 <script type="text/javascript">
 
 //Width and height of map
@@ -308,7 +309,7 @@ Promise.all([
 									.data(yearOptions).enter()
 									.append("option")
 									.text(function(d) { return (d + ""); })
-								
+
 
 		function reColorMap() {
 			var yearSelected = d3.select("#selectYear").property("value");

@@ -11,7 +11,7 @@
 /* Legend Font Style */
 body {
 	font: 11px sans-serif;
-	background-color: mistyrose;
+	background-color: floralwhite;
 }
 
 /* Legend Position Style */
@@ -117,16 +117,15 @@ var timeConv = d3.timeParse("%Y-%m")
 // Load in my states data!
 Promise.all([
   	d3.json("/visualization/us-states.json"),
-  	d3.csv("/visualization/statesdata.csv"),
   	d3.csv("/data/State_MedianRentalPrice_1Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_2Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_3Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv")
-	]).then(([world, data, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
+	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
 		//Date formats:
 
-
+		//Dropdown for bedroom type and year
 		var selectBedroom = d3.select("body").append("select")
 						.attr("class", "select")
 						.attr("id", "selectBedroom")
@@ -139,154 +138,119 @@ Promise.all([
 				.text(function (d) { return d; });
 
 		var selectYear = d3.select("body")
-						   .append("select")
-						   .attr("class", "select")
-						   .attr("id", "selectYear")
-						   .on("change", reColorMap)
-		var yearOptions = []
-		for (var year = 2000; year <= 2025; year++) {
-			yearOptions[yearOptions.length] = year;
-		}
+			.append("select")
+			.attr("class", "select")
+			.attr("id", "selectYear")
+			.on("change", reColorMap)
+
+		var yearOptions = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
+
 		var optionsYear = selectYear.selectAll("option")
-									.data(yearOptions).enter()
-									.append("option")
-									.text(function(d) { return (d + ""); })
+			.data(yearOptions).enter()
+			.append("option")
+			.text(function(d) { return (d + ""); })
 
-
-    rental_files = [one_bed, two_bed, three_bed, four_bed, five_bed]
+		// Dictionary to map dropdown bedroom selection to files	
 		rental_dict = {"1 bedroom": one_bed, "2 bedrooms": two_bed, "3 bedrooms":three_bed, "4 bedrooms": four_bed, "5 or more bedrooms": five_bed}
 
-		nondate_col = ["RegionName", "SizeRank", ""]
-
-		var dataArray = [];
-		for (var d = 0; d < data.length; d++) {
-			dataArray.push(parseFloat(data[d].value))
-		}
-		var minVal = d3.min(dataArray)
-		var maxVal = d3.max(dataArray)
-		var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
-
-		// Loop through each state data value in the .csv file
-    for (var i = 0; i < data.length; i++) {
-
-      // Grab State Name
-      var dataState = data[i].state;
-
-      // Grab data value
-      var dataValue = data[i].value;
-
-      // Find the corresponding state inside the GeoJSON
-      for (var j = 0; j < world.features.length; j++) {
-        var worldState = world.features[j].properties.NAME;
-
-        if (dataState == worldState) {
-
-          // Copy the data value into the JSON
-          world.features[j].properties.value = dataValue;
-
-          // Stop looking through the JSON
-          break;
-        }
-      }
-    }
-
+		//Runs choropleth map with default year = 2010, default bedrooms = 1
     reColorMap()
 
-     //Creates linechart for historial median prices
-     function createLinechart(world) {
-      	var body = d3.select("body")
+   //Creates linechart for historial median prices
+   	function createLinechart(world) {
+    	var body = d3.select("body")
 
-        var linechart = body.append("svg")
-          .attr("id", "linechart")
-          .attr("width", lcwidth + margin.left)
-          .attr("height", lcheight + margin.bottom + 40)
-          .attr("transform", "translate(" + 0+ "," + margin.top + ")")
+      var linechart = body.append("svg")
+        .attr("id", "linechart")
+        .attr("width", lcwidth + margin.left)
+        .attr("height", lcheight + margin.bottom + 40)
+        .attr("transform", "translate(" + 0+ "," + margin.top + ")")
 
-        var bedroom_type = document.getElementById("selectBedroom").value
+      var bedroom_type = document.getElementById("selectBedroom").value
 
-        var state = world.properties.NAME
+      var state = world.properties.NAME
 
-        var data = rental_dict[bedroom_type].find(x=> x.RegionName === state)
+      var data = rental_dict[bedroom_type].find(x=> x.RegionName === state)
 
-        var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
+      var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
 
-        data.forEach(function(p){
-        	p.date = timeConv(p.date)
-        	p.value = +p.value
-        })
-        data.splice(0, 3)
+      data.forEach(function(p){
+      	p.date = timeConv(p.date)
+      	p.value = +p.value
+      })
+      data.splice(0, 3)
 
-        var x = d3.scaleTime()
-        	.domain(d3.extent(data, function(d) {return d.date}))
-        	.range([0, lcwidth])
+      var x = d3.scaleTime()
+      	.domain(d3.extent(data, function(d) {return d.date}))
+      	.range([0, lcwidth])
 
-       	var y = d3.scaleLinear()
-       		.domain([0, d3.max(data, function(d){return +d.value})])
-       		.range([lcheight, 0])
+     	var y = d3.scaleLinear()
+     		.domain([0, d3.max(data, function(d){return +d.value})])
+     		.range([lcheight, 0])
 
-        var g = linechart.append("g")
+      var g = linechart.append("g")
 
-        g.append("g")
-        	.call(d3.axisBottom(x))
-        	.attr("transform", "translate(" + margin.left + "," + (lcheight+margin.top) + ")")
+      g.append("g")
+      	.call(d3.axisBottom(x))
+      	.attr("transform", "translate(" + margin.left + "," + (lcheight+margin.top) + ")")
 
-        g.append("g")
-        	.call(d3.axisLeft(y))
-        	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      g.append("g")
+      	.call(d3.axisLeft(y))
+      	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
-        var lines = g.append("g")
-        	.attr("id", "lines")
-        	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      var lines = g.append("g")
+      	.attr("id", "lines")
+      	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
-        lines.append("path")
-        	.datum(data)
-        	.attr("stroke", "black")
-        	.attr("fill", "none")
-        	.attr("stroke-width", 1.5)
-        	.attr("d", d3.line()
-        			.x(function(d) {return x(d.date)})
-        			.y(function(d) {return y(d.value)})
-        	)
+      lines.append("path")
+      	.datum(data)
+      	.attr("stroke", "black")
+      	.attr("fill", "none")
+      	.attr("stroke-width", 1.5)
+      	.attr("d", d3.line()
+      			.x(function(d) {return x(d.date)})
+      			.y(function(d) {return y(d.value)})
+      	)
 
-        var area = d3.area()
-			    .x(function(d) { return x(d.date); })
-			    .y0(lcheight)
-			    .y1(function(d) { return y(d.value); });
+      var area = d3.area()
+		    .x(function(d) { return x(d.date); })
+		    .y0(lcheight)
+		    .y1(function(d) { return y(d.value); });
 
-			  lines.append("path")
-	       .data([data])
-	       .attr("fill", "steelblue")
-	       .attr("d", area);
+		  lines.append("path")
+       .data([data])
+       .attr("fill", "steelblue")
+       .attr("d", area);
 
-	      var title = g.append("g")
-			    .attr("id", "line_chart_title")
-			    .attr("transform", "translate(" + (margin.left + lcwidth/2) + "," + margin.top + ")")
+      var title = g.append("g")
+		    .attr("id", "line_chart_title")
+		    .attr("transform", "translate(" + (margin.left + lcwidth/2) + "," + margin.top + ")")
 
-			  title.append("text")
-			    .attr("text-anchor", "middle")
-			    .style("font-size", "12px")
-			    .text("Median rental prices: " + state + " - " + bedroom_type)
+		  title.append("text")
+		    .attr("text-anchor", "middle")
+		    .style("font-size", "12px")
+		    .text("Median rental prices: " + state + " - " + bedroom_type)
 
-			  // y-axis label
-        ylabel = g.append("g")
-          .attr("id", "bar_y_axis_label")
-          .attr("transform", "translate(" + (margin.left - 40) + "," + (margin.top + lcheight/2) + ")")
+		  // y-axis label
+      ylabel = g.append("g")
+        .attr("id", "bar_y_axis_label")
+        .attr("transform", "translate(" + (margin.left - 40) + "," + (margin.top + lcheight/2) + ")")
 
-        ylabel.append("text")
-          .attr("transform", "rotate(-90)")
-          .text("Median rental price")
-          .style("text-anchor", "middle")
+      ylabel.append("text")
+        .attr("transform", "rotate(-90)")
+        .text("Median rental price")
+        .style("text-anchor", "middle")
 
 
-        //x-axis label
-        xlabel = g.append("g")
-          .attr("id", "bar_x_axis_label")
-          .attr("transform", "translate(" + (lcwidth/2 + margin.left) + "," + (margin.bottom + lcheight + 20) + ")")
+      //x-axis label
+      xlabel = g.append("g")
+        .attr("id", "bar_x_axis_label")
+        .attr("transform", "translate(" + (lcwidth/2 + margin.left) + "," + (margin.bottom + lcheight + 20) + ")")
 
-        xlabel.append("text")
-          .text("Year")
-          .style("text-anchor", "middle")
-      }
+      xlabel.append("text")
+        .text("Year")
+        .style("text-anchor", "middle")
+    }
 
 
 		function reColorMap() {
@@ -324,13 +288,14 @@ Promise.all([
 
 			d3.selectAll("#map").remove();
 			createMap(dataArray, world)
-
 		}
 
-
 		function createMap(dataArray, world){
-			var minVal = d3.min(dataArray)
-			var maxVal = d3.max(dataArray)
+
+			data_list = (world.features).map((dict) => (dict.properties.value))
+
+			var minVal = d3.min(data_list)
+			var maxVal = d3.max(data_list)
 			var ramp = d3.scaleLinear().domain([minVal,maxVal]).range([lowColor,highColor])
 
 			var map = svg.append("svg")

@@ -1,0 +1,57 @@
+import pandas as pd
+import numpy as np
+import sklearn
+from statsmodels.tsa.arima.model import ARIMA
+import matplotlib.pyplot as plt
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+import statsmodels.api as sm
+
+import warnings
+
+warnings.filterwarnings('ignore')
+
+data = pd.read_csv("C:/Users/Huang/Desktop/course/4242/project/City_Zhvi_1bedroom.csv", index_col=1)
+data["room_number"] = ["1bedroom"]*len(data)
+
+for i in ['2bedroom', '3bedroom', '4bedroom', '5bedroomOrMore', 'AllHomes']:
+    datat = pd.read_csv("C:/Users/Huang/Desktop/course/4242/project/City_Zhvi_" + i + ".csv", index_col=1)
+    datat["room_number"] = [i]*len(datat)
+    data = pd.concat([data, datat],axis=0,ignore_index=True)
+
+
+'''
+date = data.columns[8:-1]
+
+dataAVG = data[date].mean(axis = 0)
+# determine parameter d
+diff1 = dataAVG.diff(1)
+diff2 = dataAVG.diff(2)
+plt.plot(date, dataAVG, 'r--')
+plt.plot(date, diff1, 'g--')
+plt.plot(date, diff2, 'b--')
+plt.show()
+# determin parameter p
+diff1 = diff1.dropna()
+plot_acf(diff1)
+plot_pacf(diff1)
+'''
+gb = data.groupby(['State', 'room_number'])
+datagb = gb.mean()
+datagb = datagb.drop(['Unnamed: 0', 'SizeRank'], axis = 1)
+datac = gb.count()['Unnamed: 0']
+#sm.tsa.arma_order_select_ic(diff1, max_ar = 5, max_ma = 5, ic = "aic")
+
+
+pfdata = pd.DataFrame()
+
+    
+for i in range(len(datagb)):
+    sample = datagb.iloc[i]
+    sample = sample.dropna()
+    model = ARIMA(datagb.iloc[i].astype("float"), order = (5,1,5))
+    model = model.fit()
+    forecast= model.forecast(12)
+    pfdata = pfdata.append(pd.DataFrame(pd.Series([datagb.index[i][0], datagb.index[i][1], datac[i]]).append(forecast)).T)
+
+pfdata.to_csv("C:/Users/Huang/Desktop/course/4242/project/output.csv")
+

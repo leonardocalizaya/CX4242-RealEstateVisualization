@@ -89,20 +89,26 @@ var projection = d3.geoAlbersUsa()
   .translate([width / 2, height / 2]) // translate to center of screen
   .scale([1000]); // scale things down so see entire US
 
-// Define path generator
+// Path generator
 var path = d3.geoPath() // path generator that will convert GeoJSON to SVG paths
   .projection(projection); // tell path generator to use albersUsa projection
 
-//Create SVG element and append map to the SVG
+//Dropdown 
+var selectBedroom = d3.select("body").append("select")
+var selectYear = d3.select("body").append("select")
+
+//SVG element and append map to the SVG
 var svg = d3.select("body")
   .append("svg")
   .attr("id", "svg")
   .attr("width", width)
   .attr("height", height);
 
+//Map svg
 var map = svg.append("svg").
 	attr("id", "map")
 
+//Tooltip
 var tooltip = d3.tip()
 	.attr("class", "d3-tip")
 	.attr("id", "tooltip")
@@ -121,25 +127,23 @@ Promise.all([
   	d3.csv("/data/State_MedianRentalPrice_2Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_3Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
-  	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv")
+  	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv"),
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
-		//Date formats:
 
 		//Dropdown for bedroom type and year
-		var selectBedroom = d3.select("body").append("select")
-						.attr("class", "select")
-						.attr("id", "selectBedroom")
-						.on("change", reColorMap);
+		
+		selectBedroom.attr("class", "select")
+			.attr("id", "selectBedroom")
+			.on("change", reColorMap);
+
 		var roomOptions = ["1 bedroom", "2 bedrooms", "3 bedrooms", "4 bedrooms", "5 or more bedrooms"];
-		var optionsBedroom = selectBedroom
-		  .selectAll('option')
-			.data(roomOptions).enter()
+		selectBedroom.selectAll('option')
+			.data(roomOptions)
+			.enter()
 			.append('option')
 				.text(function (d) { return d; });
 
-		var selectYear = d3.select("body")
-			.append("select")
-			.attr("class", "select")
+		selectYear.attr("class", "select")
 			.attr("id", "selectYear")
 			.on("change", reColorMap)
 
@@ -156,7 +160,7 @@ Promise.all([
 		//Runs choropleth map with default year = 2010, default bedrooms = 1
     reColorMap()
 
-   //Creates linechart for historial median prices
+    //Creates linechart for historial median prices
    	function createLinechart(world) {
     	var body = d3.select("body")
 
@@ -309,16 +313,21 @@ Promise.all([
 	      .style("stroke", "#fff")
 	      .style("stroke-width", "1")
 	      .style("fill", function(d) {
-	      	return ramp(d.properties.value)
+	      	if (d.properties.value == undefined){
+	      		return "#808080"
+	      	}
+	      	else{
+	      		return ramp(d.properties.value)
+	      	}
 	      })
 	      .on("mouseover", function(d) {
-	      	d3.select(this).style("fill", "steelblue")
+	      	d3.select(this).style("fill", ramp(3*d.properties.value))
 	      	createLinechart(d)
 
 		      var x = d3.event.x,
 				  y = d3.event.y;
 				  var state = d.properties.NAME;
-				  var value = d.properties.value;
+				  var value = Math.round(d.properties.value);
 				  var html = "State: " + state;
 				  html += "\nMedian Rental Price: " + value;
 				  tooltip.html(html);
@@ -327,7 +336,14 @@ Promise.all([
 				  tooltip.show();
 	      })
 	      .on("mouseout", function(d){
-	      	d3.select(this).style("fill", ramp(d.properties.value))
+	      	d3.select(this).style("fill", function(d){
+	      		if (d.properties.value == undefined){
+	      		return "#808080"
+		      	}
+		      	else{
+		      		return ramp(d.properties.value)
+		      	}
+	      	})
 	      	linechart.remove();
 			tooltip.hide();
 	      })

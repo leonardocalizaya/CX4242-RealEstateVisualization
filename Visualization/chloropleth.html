@@ -117,6 +117,7 @@ var tooltip = d3.tip()
 	map.call(tooltip);
 
 var timeConv = d3.timeParse("%Y-%m")
+var timeConv2 = d3.timeParse("%Y-%m-%d")
 
 var svg_linecharts = d3.select("body")
 	.append("svg")
@@ -137,8 +138,9 @@ Promise.all([
   	d3.csv("/data/State_Zhvi_3Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_4Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_5BedroomOrMore.csv"),
+  	d3.csv("/data/forecasts.csv")
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
-		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi]) => {
+		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi, forecasts]) => {
 
 		//Dropdown for bedroom type and year
 		
@@ -203,7 +205,7 @@ Promise.all([
      		.range([lcheight, 0])
 
       var g = linechart.append("g")
-  			.attr("transform", "translate(" + 550 + "," + 0 + ")")
+  			.attr("transform", "translate(" + 520 + "," + 0 + ")")
 
       g.append("g")
       	.call(d3.axisBottom(x))
@@ -275,7 +277,7 @@ Promise.all([
         .attr("height", lcheight + margin.bottom + 40)
         .attr("transform", "translate(" + 600+ "," + margin.top + ")")
 
-      var timeConv2 = d3.timeParse("%Y-%m-%d")
+      
       var bedroom_type = document.getElementById("selectBedroom").value
 
       var state = world.properties.NAME
@@ -283,6 +285,14 @@ Promise.all([
       var data = zhvi_dict[bedroom_type].find(x=> x.RegionName === state)
 
       var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
+
+
+      var bedroom_mapping = {"1 bedroom":"1bedroom", "2 bedrooms": "2bedroom", "3 bedrooms": "3bedroom", "4 bedrooms":"4bedroom", "5 or more bedrooms": "5bedroomOrMore"}
+      
+      //console.log(forecasts)
+      var forecast_data = forecasts.find(x=> (x.State===state && x["Room size"] === bedroom_mapping[bedroom_type]))
+
+      //console.log(forecast_data)
 
       data.forEach(function(p){
       	p.date = timeConv2(p.date)
@@ -367,6 +377,28 @@ Promise.all([
 			var yearSelected = d3.select("#selectYear").property("value");
 			var bedSelected = d3.select("#selectBedroom").property("value");
 			file = rental_dict[bedSelected];
+
+			file_zhvi = zhvi_dict[bedSelected]
+			state_ppvalue= {}
+			//console.log(file_zhvi)
+
+			//Calculating average zhvi for each state
+			file_zhvi.forEach(function(state_dict) {
+
+				array = Object.entries(state_dict).map(([key, value]) => ({"date": key, "value": value}))
+				array.splice(0, 6)
+
+				year_data = []
+				//Filters by year
+				array.forEach(function(time_dict){
+					if (time_dict.date.substring(0, 4) == yearSelected && time_dict.value != ""){
+						year_data.push(time_dict.value)
+					}
+				})
+
+				state_ppvalue[state_dict["RegionName"]] = d3.mean(year_data)
+			})
+
 			var values_dict = {};
 			var dataArray = []
 			for (let i = 0; i < file.length; i++) {
@@ -391,10 +423,10 @@ Promise.all([
 				dataArray[dataArray.length] = avg;
 			}
 
-			for (let i = 0; i < world.features.length; i++) {
-				var state = world.features[i].properties.NAME;
-				world.features[i].properties.value = values_dict[state];
-			}
+			world.features.forEach(function(feature){
+				feature.properties.value = values_dict[feature.properties.NAME]
+				feature.properties.zhvi = state_ppvalue[feature.properties.NAME]
+			})
 
 			d3.selectAll("#map").remove();
 			createMap(dataArray, world)
@@ -436,7 +468,8 @@ Promise.all([
 				  var state = d.properties.NAME;
 				  var value = Math.round(d.properties.value);
 				  var html = "State: " + state;
-				  html += "\nMedian Rental Price: " + value;
+				  html += "\nMedian Rental Price: " + value + "";
+				  html += "\nProperty Median Price: " + Math.round(d.properties.zhvi) + "";
 				  tooltip.html(html);
 				  tooltip.style("top", y + "px");
 				  tooltip.style("left", x + "px");

@@ -67,7 +67,7 @@ h3 {
 <body>
 	<h1>The U.S. Housing Price Forecasting Visualization</h1>
 	<p></p>
-	<h2>Select the year and number of bedrooms below</h2>
+	<h2 id="selectText">Select the year and number of bedrooms below</h2>
 	<h3>Team #4 The Underdogs: William Lusty, Leonardo Calizaya, Matthew Pleskow, Haoxuan Huang, Michael Cho, Jun Hyuk Jeon</h3>
 <script type="text/javascript">
 
@@ -165,6 +165,10 @@ Promise.all([
 			.data(yearOptions).enter()
 			.append("option")
 			.text(function(d) { return (d + ""); })
+
+		if(document.getElementById("selectBedroom").value) {
+			document.getElementById("selectText").textContent="";
+		}
 
 		// Dictionary to map dropdown bedroom selection to files	
 		rental_dict = {"1 bedroom": one_bed, "2 bedrooms": two_bed, "3 bedrooms":three_bed, "4 bedrooms": four_bed, "5 or more bedrooms": five_bed}

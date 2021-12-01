@@ -77,7 +77,7 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50}
 var width = 1200 - margin.left - margin.right;
 var height = 500 - margin.top - margin.bottom;
 
-var lcwidth = 600 - margin.left - margin.right
+var lcwidth = 520 - margin.left - margin.right
 var lcheight = 190 - margin.top - margin.bottom
 
 
@@ -118,7 +118,11 @@ var tooltip = d3.tip()
 
 var timeConv = d3.timeParse("%Y-%m")
 
-
+var svg_linecharts = d3.select("body")
+	.append("svg")
+  .attr("id", "svg")
+  .attr("width", 1200)
+  .attr("height", 190);
 
 // Load in my states data!
 Promise.all([
@@ -128,7 +132,13 @@ Promise.all([
   	d3.csv("/data/State_MedianRentalPrice_3Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
   	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv"),
-	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed]) => {
+  	d3.csv("/data/State_Zhvi_1Bedroom.csv"),
+  	d3.csv("/data/State_Zhvi_2Bedroom.csv"),
+  	d3.csv("/data/State_Zhvi_3Bedroom.csv"),
+  	d3.csv("/data/State_Zhvi_4Bedroom.csv"),
+  	d3.csv("/data/State_Zhvi_5BedroomOrMore.csv"),
+	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
+		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi]) => {
 
 		//Dropdown for bedroom type and year
 		
@@ -157,18 +167,18 @@ Promise.all([
 		// Dictionary to map dropdown bedroom selection to files	
 		rental_dict = {"1 bedroom": one_bed, "2 bedrooms": two_bed, "3 bedrooms":three_bed, "4 bedrooms": four_bed, "5 or more bedrooms": five_bed}
 
+		zhvi_dict = {"1 bedroom": one_bed_zhvi, "2 bedrooms": two_bed_zhvi, "3 bedrooms":three_bed_zhvi, "4 bedrooms": four_bed_zhvi, "5 or more bedrooms": five_bed_zhvi}
+
 		//Runs choropleth map with default year = 2010, default bedrooms = 1
     reColorMap()
 
     //Creates linechart for historial median prices
-   	function createLinechart(world) {
-    	var body = d3.select("body")
+   	function createLinechart_rental(world) {
 
-      var linechart = body.append("svg")
+      var linechart = svg_linecharts.append("svg")
         .attr("id", "linechart")
-        .attr("width", lcwidth + margin.left)
+        .attr("width", width)
         .attr("height", lcheight + margin.bottom + 40)
-        .attr("transform", "translate(" + 0+ "," + margin.top + ")")
 
       var bedroom_type = document.getElementById("selectBedroom").value
 
@@ -193,6 +203,7 @@ Promise.all([
      		.range([lcheight, 0])
 
       var g = linechart.append("g")
+  			.attr("transform", "translate(" + 550 + "," + 0 + ")")
 
       g.append("g")
       	.call(d3.axisBottom(x))
@@ -252,6 +263,101 @@ Promise.all([
         .attr("transform", "translate(" + (lcwidth/2 + margin.left) + "," + (margin.bottom + lcheight + 20) + ")")
 
       xlabel.append("text")
+        .text("Year")
+        .style("text-anchor", "middle")
+    }
+
+    function createLinechart_zhvi(world) {
+
+      var linechart_zhvi = svg_linecharts.append("svg")
+        .attr("id", "linechart2")
+        .attr("width", lcwidth + margin.left)
+        .attr("height", lcheight + margin.bottom + 40)
+        .attr("transform", "translate(" + 600+ "," + margin.top + ")")
+
+      var timeConv2 = d3.timeParse("%Y-%m-%d")
+      var bedroom_type = document.getElementById("selectBedroom").value
+
+      var state = world.properties.NAME
+
+      var data = zhvi_dict[bedroom_type].find(x=> x.RegionName === state)
+
+      var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
+
+      data.forEach(function(p){
+      	p.date = timeConv2(p.date)
+      	p.value = +p.value
+      })
+      data.splice(0, 7)
+
+      var x = d3.scaleTime()
+      	.domain(d3.extent(data, function(d) {return d.date}))
+      	.range([0, lcwidth])
+
+     	var y = d3.scaleLinear()
+     		.domain([0, d3.max(data, function(d){return +d.value})])
+     		.range([lcheight, 0])
+
+      var g2 = linechart_zhvi.append("g")
+
+      g2.append("g")
+      	.call(d3.axisBottom(x))
+      	.attr("transform", "translate(" + margin.left + "," + (lcheight+margin.top) + ")")
+
+      g2.append("g")
+      	.call(d3.axisLeft(y))
+      	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+      var lines2 = g2.append("g")
+      	.attr("id", "lines")
+      	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+      lines2.append("path")
+      	.datum(data)
+      	.attr("stroke", "black")
+      	.attr("fill", "none")
+      	.attr("stroke-width", 1.5)
+      	.attr("d", d3.line()
+      			.x(function(d) {return x(d.date)})
+      			.y(function(d) {return y(d.value)})
+      	)
+
+      var area2 = d3.area()
+		    .x(function(d) { return x(d.date); })
+		    .y0(lcheight)
+		    .y1(function(d) { return y(d.value); });
+
+		  lines2.append("path")
+       .data([data])
+       .attr("fill", "#F19039")
+       .attr("d", area2);
+
+      var title2 = g2.append("g")
+		    .attr("id", "line_chart_title")
+		    .attr("transform", "translate(" + (margin.left + lcwidth/2) + "," + margin.top + ")")
+
+		  title2.append("text")
+		    .attr("text-anchor", "middle")
+		    .style("font-size", "12px")
+		    .text("Property Median Price: " + state + " - " + bedroom_type)
+
+		  // y-axis label
+      ylabel2 = g2.append("g")
+        .attr("id", "bar_y_axis_label")
+        .attr("transform", "translate(" + (margin.left - 40) + "," + (margin.top + lcheight/2) + ")")
+
+      ylabel2.append("text")
+        .attr("transform", "rotate(-90)")
+        .text("Median rental price")
+        .style("text-anchor", "middle")
+
+
+      //x-axis label
+      xlabel2 = g2.append("g")
+        .attr("id", "bar_x_axis_label")
+        .attr("transform", "translate(" + (lcwidth/2 + margin.left) + "," + (margin.bottom + lcheight + 20) + ")")
+
+      xlabel2.append("text")
         .text("Year")
         .style("text-anchor", "middle")
     }
@@ -322,7 +428,8 @@ Promise.all([
 	      })
 	      .on("mouseover", function(d) {
 	      	d3.select(this).style("fill", ramp(3*d.properties.value))
-	      	createLinechart(d)
+	      	createLinechart_rental(d)
+	      	createLinechart_zhvi(d)
 
 		      var x = d3.event.x,
 				  y = d3.event.y;
@@ -344,8 +451,9 @@ Promise.all([
 		      		return ramp(d.properties.value)
 		      	}
 	      	})
-	      	linechart.remove();
-			tooltip.hide();
+	      	linechart.remove()
+	      	linechart2.remove()
+					tooltip.hide()
 	      })
 
 		  var w = 140, h = 300;

@@ -382,12 +382,10 @@ Promise.all([
 			state_ppvalue= {}
 			//console.log(file_zhvi)
 
-			//Calculating average zhvi for each state
+			//Calculating average zhvi for each state per year
 			file_zhvi.forEach(function(state_dict) {
-
 				array = Object.entries(state_dict).map(([key, value]) => ({"date": key, "value": value}))
 				array.splice(0, 6)
-
 				year_data = []
 				//Filters by year
 				array.forEach(function(time_dict){
@@ -395,10 +393,10 @@ Promise.all([
 						year_data.push(time_dict.value)
 					}
 				})
-
 				state_ppvalue[state_dict["RegionName"]] = d3.mean(year_data)
 			})
 
+			//Calculating median prices per state per year
 			var values_dict = {};
 			var dataArray = []
 			for (let i = 0; i < file.length; i++) {

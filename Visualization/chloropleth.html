@@ -118,6 +118,7 @@ var tooltip = d3.tip()
 
 var timeConv = d3.timeParse("%Y-%m")
 var timeConv2 = d3.timeParse("%Y-%m-%d")
+var timeConv3 = d3.timeParse("%m/%d/%Y")
 
 var svg_linecharts = d3.select("body")
 	.append("svg")
@@ -138,7 +139,7 @@ Promise.all([
   	d3.csv("/data/State_Zhvi_3Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_4Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_5BedroomOrMore.csv"),
-  	d3.csv("/data/forecasts.csv")
+  	d3.csv("/forecasts5.csv")
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
 		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi, forecasts]) => {
 
@@ -240,7 +241,7 @@ Promise.all([
 
 		  lines.append("path")
        .data([data])
-       .attr("fill", "steelblue")
+       .attr("fill", "orange")
        .attr("d", area);
 
       var title = g.append("g")
@@ -288,21 +289,27 @@ Promise.all([
 
       var data = zhvi_dict[bedroom_type].find(x=> x.RegionName === state)
 
-      var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
+      var obs_data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value, "type": "observed"}))
 
-
-      var bedroom_mapping = {"1 bedroom":"1bedroom", "2 bedrooms": "2bedroom", "3 bedrooms": "3bedroom", "4 bedrooms":"4bedroom", "5 or more bedrooms": "5bedroomOrMore"}
-      
-      //console.log(forecasts)
-      var forecast_data = forecasts.find(x=> (x.State===state && x["Room size"] === bedroom_mapping[bedroom_type]))
-
-      //console.log(forecast_data)
-
-      data.forEach(function(p){
+      obs_data.forEach(function(p){
       	p.date = timeConv2(p.date)
       	p.value = +p.value
       })
-      data.splice(0, 7)
+      obs_data.splice(0, 7)
+
+      obs_data = obs_data.filter(function(d) {
+				return d.date >= d3.timeParse("%Y-%m-%d")("2007-1-1");
+			})
+
+      var bedroom_mapping = {"1 bedroom":"1bedroom", "2 bedrooms": "2bedroom", "3 bedrooms": "3bedroom", "4 bedrooms":"4bedroom", "5 or more bedrooms": "5bedroomOrMore"}
+      
+      var forecast_data = forecasts.find(x=> (x.State==state && x["Room size"] == bedroom_mapping[bedroom_type]))
+
+      forecast_data = Object.entries(forecast_data).map(([key, value]) => ({"date": timeConv3(key), "value": value, "type":"predicted"}))
+
+      forecast_data.splice(0, 3)
+
+      data = obs_data.concat(forecast_data)
 
       var x = d3.scaleTime()
       	.domain(d3.extent(data, function(d) {return d.date}))
@@ -342,9 +349,16 @@ Promise.all([
 		    .y1(function(d) { return y(d.value); });
 
 		  lines2.append("path")
-       .data([data])
-       .attr("fill", "#F19039")
-       .attr("d", area2);
+       .data([obs_data])
+       .attr("class", "area")
+       .attr("d", area2)
+       .attr("fill", "steelblue");
+
+      lines2.append("path")
+       .data([forecast_data])
+       .attr("class", "area")
+       .attr("d", area2)
+       .attr("fill", "lightsteelblue");
 
       var title2 = g2.append("g")
 		    .attr("id", "line_chart_title")
@@ -384,7 +398,6 @@ Promise.all([
 
 			file_zhvi = zhvi_dict[bedSelected]
 			state_ppvalue= {}
-			//console.log(file_zhvi)
 
 			//Calculating average zhvi for each state per year
 			file_zhvi.forEach(function(state_dict) {

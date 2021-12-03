@@ -66,7 +66,7 @@ h3 {
 </head>
 <body>
 	<h1>The U.S. Housing Price Forecasting Visualization</h1>
-	<p></p>
+	<p>Select the year and number of bedrooms below to update the choropleth map. Hover on a state to see current as well as historical median rental prices and median property prices. Years 2020 and 2021 contain forecasted data</p>
 	<h2 id="selectText">Select the year and number of bedrooms below</h2>
 	<h3>Team #4 The Underdogs: William Lusty, Leonardo Calizaya, Matthew Pleskow, Haoxuan Huang, Michael Cho, Jun Hyuk Jeon</h3>
 <script type="text/javascript">
@@ -82,7 +82,7 @@ var lcheight = 190 - margin.top - margin.bottom
 
 
 var lowColor = "#C9F0C2"
-var highColor = '#14BC1C'
+var highColor = '#23A00D'
 
 // D3 Projection
 var projection = d3.geoAlbersUsa()
@@ -323,15 +323,15 @@ Promise.all([
 
       g2.append("g")
       	.call(d3.axisBottom(x))
-      	.attr("transform", "translate(" + margin.left + "," + (lcheight+margin.top) + ")")
+      	.attr("transform", "translate(" + (margin.left+10) + "," + (lcheight+margin.top) + ")")
 
       g2.append("g")
       	.call(d3.axisLeft(y))
-      	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      	.attr("transform", "translate(" + (margin.left+10) + "," + margin.top + ")")
 
       var lines2 = g2.append("g")
       	.attr("id", "lines")
-      	.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      	.attr("transform", "translate(" + (margin.left+10) + "," + margin.top + ")")
 
       lines2.append("path")
       	.datum(data)
@@ -367,7 +367,7 @@ Promise.all([
 		  title2.append("text")
 		    .attr("text-anchor", "middle")
 		    .style("font-size", "12px")
-		    .text("Property Median Price: " + state + " - " + bedroom_type)
+		    .text("Median Property Price: " + state + " - " + bedroom_type)
 
 		  // y-axis label
       ylabel2 = g2.append("g")
@@ -376,7 +376,7 @@ Promise.all([
 
       ylabel2.append("text")
         .attr("transform", "rotate(-90)")
-        .text("Median rental price")
+        .text("Median property price")
         .style("text-anchor", "middle")
 
 
@@ -433,14 +433,10 @@ Promise.all([
 						year_data_2.push(time_dict.value)
 					}
 				})
-				console.log(year_data_2)
-				console.log(d3.mean(year_data_2))
 				if (year_data_2.length > 0) {
 					state_ppvalue[state_dict["State"]] = d3.mean(year_data_2)
 				}
 			})
-
-			console.log(state_ppvalue)
 
 			//Calculating median prices per state per year
 			var values_dict = {};
@@ -513,7 +509,7 @@ Promise.all([
 				  var value = Math.round(d.properties.rent);
 				  var html = "State: " + state;
 				  html += "\nMedian Rental Price: " + value + "";
-				  html += "\nProperty Median Price: " + Math.round(d.properties.zhvi) + "";
+				  html += "\nMedian Property Price: " + Math.round(d.properties.zhvi) + "";
 				  tooltip.html(html);
 				  tooltip.style("top", y + "px");
 				  tooltip.style("left", x + "px");
@@ -539,13 +535,6 @@ Promise.all([
 				.attr("width", w)
 				.attr("height", h)
 				.attr("class", "legend");
-
-			map.append("text")	
-				.attr("x", 130)
-				.attr("y", 330)
-				.attr("text-anchor", "middle")
-		    .style("font-size", "12px")
-		    .text("Years 2020 and 2021 contain forecasted data")
 
 			var legend = key.append("defs")
 				.append("svg:linearGradient")

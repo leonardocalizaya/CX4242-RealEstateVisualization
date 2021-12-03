@@ -81,7 +81,7 @@ var lcwidth = 520 - margin.left - margin.right
 var lcheight = 190 - margin.top - margin.bottom
 
 
-var lowColor = '#AEE6B1'
+var lowColor = "#C9F0C2"
 var highColor = '#14BC1C'
 
 // D3 Projection
@@ -126,6 +126,8 @@ var svg_linecharts = d3.select("body")
   .attr("width", 1200)
   .attr("height", 190);
 
+ var bedroom_mapping = {"1 bedroom":"1bedroom", "2 bedrooms": "2bedroom", "3 bedrooms": "3bedroom", "4 bedrooms":"4bedroom", "5 or more bedrooms": "5bedroomOrMore"}
+
 // Load in my states data!
 Promise.all([
   	d3.json("/visualization/us-states.json"),
@@ -160,7 +162,7 @@ Promise.all([
 			.attr("id", "selectYear")
 			.on("change", reColorMap)
 
-		var yearOptions = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
+		var yearOptions = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]
 
 		var optionsYear = selectYear.selectAll("option")
 			.data(yearOptions).enter()
@@ -300,8 +302,6 @@ Promise.all([
       obs_data = obs_data.filter(function(d) {
 				return d.date >= d3.timeParse("%Y-%m-%d")("2007-1-1");
 			})
-
-      var bedroom_mapping = {"1 bedroom":"1bedroom", "2 bedrooms": "2bedroom", "3 bedrooms": "3bedroom", "4 bedrooms":"4bedroom", "5 or more bedrooms": "5bedroomOrMore"}
       
       var forecast_data = forecasts.find(x=> (x.State==state && x["Room size"] == bedroom_mapping[bedroom_type]))
 
@@ -403,6 +403,7 @@ Promise.all([
 			file_zhvi.forEach(function(state_dict) {
 				array = Object.entries(state_dict).map(([key, value]) => ({"date": key, "value": value}))
 				array.splice(0, 6)
+
 				year_data = []
 				//Filters by year
 				array.forEach(function(time_dict){
@@ -412,6 +413,34 @@ Promise.all([
 				})
 				state_ppvalue[state_dict["RegionName"]] = d3.mean(year_data)
 			})
+
+			//Appending forecasted data
+
+			forecasted_data = forecasts.filter(function(d){
+				return d["Room size"] == bedroom_mapping[bedSelected]
+			})
+
+
+			forecasted_data.forEach(function(state_dict){
+				array = Object.entries(state_dict).map(([key, value]) => ({"date": key, "value": +value}))
+
+				array.splice(0, 3)
+
+				year_data_2 = []
+
+				array.forEach(function(time_dict){
+					if (time_dict.date.slice(-4) == yearSelected && time_dict.value != ""){
+						year_data_2.push(time_dict.value)
+					}
+				})
+				console.log(year_data_2)
+				console.log(d3.mean(year_data_2))
+				if (year_data_2.length > 0) {
+					state_ppvalue[state_dict["State"]] = d3.mean(year_data_2)
+				}
+			})
+
+			console.log(state_ppvalue)
 
 			//Calculating median prices per state per year
 			var values_dict = {};
@@ -439,17 +468,17 @@ Promise.all([
 			}
 
 			world.features.forEach(function(feature){
-				feature.properties.value = values_dict[feature.properties.NAME]
+				feature.properties.rent = values_dict[feature.properties.NAME]
 				feature.properties.zhvi = state_ppvalue[feature.properties.NAME]
 			})
 
 			d3.selectAll("#map").remove();
-			createMap(dataArray, world)
+			createMap(world)
 		}
 
-		function createMap(dataArray, world){
+		function createMap(world){
 
-			data_list = (world.features).map((dict) => (dict.properties.value))
+			data_list = (world.features).map((dict) => (dict.properties.zhvi))
 
 			var minVal = d3.min(data_list)
 			var maxVal = d3.max(data_list)
@@ -466,22 +495,22 @@ Promise.all([
 	      .style("stroke", "#fff")
 	      .style("stroke-width", "1")
 	      .style("fill", function(d) {
-	      	if (d.properties.value == undefined){
+	      	if (d.properties.zhvi == undefined){
 	      		return "#808080"
 	      	}
 	      	else{
-	      		return ramp(d.properties.value)
+	      		return ramp(d.properties.zhvi)
 	      	}
 	      })
 	      .on("mouseover", function(d) {
-	      	d3.select(this).style("fill", ramp(3*d.properties.value))
+	      	d3.select(this).style("fill", ramp(3*d.properties.zhvi))
 	      	createLinechart_rental(d)
 	      	createLinechart_zhvi(d)
 
 		      var x = d3.event.x,
 				  y = d3.event.y;
 				  var state = d.properties.NAME;
-				  var value = Math.round(d.properties.value);
+				  var value = Math.round(d.properties.rent);
 				  var html = "State: " + state;
 				  html += "\nMedian Rental Price: " + value + "";
 				  html += "\nProperty Median Price: " + Math.round(d.properties.zhvi) + "";
@@ -492,11 +521,11 @@ Promise.all([
 	      })
 	      .on("mouseout", function(d){
 	      	d3.select(this).style("fill", function(d){
-	      		if (d.properties.value == undefined){
+	      		if (d.properties.zhvi == undefined){
 	      		return "#808080"
 		      	}
 		      	else{
-		      		return ramp(d.properties.value)
+		      		return ramp(d.properties.zhvi)
 		      	}
 	      	})
 	      	linechart.remove()
@@ -510,6 +539,13 @@ Promise.all([
 				.attr("width", w)
 				.attr("height", h)
 				.attr("class", "legend");
+
+			map.append("text")	
+				.attr("x", 130)
+				.attr("y", 330)
+				.attr("text-anchor", "middle")
+		    .style("font-size", "12px")
+		    .text("Years 2020 and 2021 contain forecasted data")
 
 			var legend = key.append("defs")
 				.append("svg:linearGradient")

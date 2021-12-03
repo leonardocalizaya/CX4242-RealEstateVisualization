@@ -141,7 +141,7 @@ Promise.all([
   	d3.csv("/data/State_Zhvi_3Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_4Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_5BedroomOrMore.csv"),
-  	d3.csv("/forecasts5.csv")
+  	d3.csv("/data/forecast_total.csv")
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
 		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi, forecasts]) => {
 
@@ -168,9 +168,10 @@ Promise.all([
 
 					console.log("year")
 
-					map.append("text")
-			      .text("AAAAAAAAAAAAA")
-			      .attr("transform", "translate(" + 300 + "," + 0 + ")")
+					d3.select("body").append("text")
+				    .attr("text-anchor", "middle")
+				    .style("font-size", "12px")
+				    .text("POPUP TEXT")
 				}
 			})
 
@@ -311,12 +312,15 @@ Promise.all([
       obs_data = obs_data.filter(function(d) {
 				return d.date >= d3.timeParse("%Y-%m-%d")("2007-1-1");
 			})
+			console.log(forecasts)
       
-      var forecast_data = forecasts.find(x=> (x.State==state && x["Room size"] == bedroom_mapping[bedroom_type]))
+      var forecast_data = forecasts.find(x=> (x.State==state && x["Room Size"] == bedroom_mapping[bedroom_type]))
+
+
 
       forecast_data = Object.entries(forecast_data).map(([key, value]) => ({"date": timeConv3(key), "value": value, "type":"predicted"}))
 
-      forecast_data.splice(0, 3)
+      forecast_data.splice(0, 2)
 
       data = obs_data.concat(forecast_data)
 
@@ -426,9 +430,8 @@ Promise.all([
 			//Appending forecasted data
 
 			forecasted_data = forecasts.filter(function(d){
-				return d["Room size"] == bedroom_mapping[bedSelected]
+				return d["Room Size"] == bedroom_mapping[bedSelected]
 			})
-
 
 			forecasted_data.forEach(function(state_dict){
 				array = Object.entries(state_dict).map(([key, value]) => ({"date": key, "value": +value}))
@@ -438,7 +441,7 @@ Promise.all([
 				year_data_2 = []
 
 				array.forEach(function(time_dict){
-					if (time_dict.date.substring(0, 4) == yearSelected && time_dict.value != ""){
+					if (time_dict.date.slice(-4) == yearSelected && time_dict.value != ""){
 						year_data_2.push(time_dict.value)
 					}
 				})

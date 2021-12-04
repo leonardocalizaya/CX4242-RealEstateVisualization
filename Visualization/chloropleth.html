@@ -67,7 +67,6 @@ h3 {
 <body>
 	<h1>The U.S. Housing Price Forecasting Visualization</h1>
 	<p>Select the year and number of bedrooms below to update the choropleth map. Hover on a state to see current as well as historical median rental prices and median property prices. Years 2020 and 2021 contain forecasted data</p>
-	<h2 id="selectText">Select the year and number of bedrooms below</h2>
 	<h3>Team #4 The Underdogs: William Lusty, Leonardo Calizaya, Matthew Pleskow, Haoxuan Huang, Michael Cho, Jun Hyuk Jeon</h3>
 <script type="text/javascript">
 
@@ -205,7 +204,21 @@ Promise.all([
 
       var state = world.properties.NAME
 
+      var g = linechart.append("g")
+  			.attr("transform", "translate(" + 520 + "," + 0 + ")")
+
       var data = rental_dict[bedroom_type].find(x=> x.RegionName === state)
+
+      if (data == undefined){
+      	g.append("text")
+		    .attr("text-anchor", "middle")
+		    .style("font-size", "12px")
+		    .text("No rental prices available for this state.")
+		    .attr("transform", "translate(" + (margin.left + lcwidth/2) + "," + margin.top + ")")
+
+		    return ""
+      }
+
 
       var data = Object.entries(data).map(([key, value]) => ({"date": key, "value": value}))
 
@@ -223,8 +236,7 @@ Promise.all([
      		.domain([0, d3.max(data, function(d){return +d.value})])
      		.range([lcheight, 0])
 
-      var g = linechart.append("g")
-  			.attr("transform", "translate(" + 520 + "," + 0 + ")")
+      
 
       g.append("g")
       	.call(d3.axisBottom(x))
@@ -594,10 +606,10 @@ Promise.all([
 				.text(function(){
 					year = d3.select("#selectYear").property("value")
 					if (year>= 2020){
-						return "* Data from " + year + " is forecasted"
+						return "* Data from " + year + " is forecasted."
 					}
 					else {
-						return ""
+						return "* Data from " + year + " is observed."
 					}
 				})
 				.style("font-size", "14px")

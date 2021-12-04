@@ -117,7 +117,7 @@ var tooltip = d3.tip()
 
 var timeConv = d3.timeParse("%Y-%m")
 var timeConv2 = d3.timeParse("%Y-%m-%d")
-var timeConv3 = d3.timeParse("%m/%d/%Y")
+var timeConv3 = d3.timeParse("%m/%d/%y")
 
 var svg_linecharts = d3.select("body")
 	.append("svg")
@@ -140,7 +140,7 @@ Promise.all([
   	d3.csv("/data/State_Zhvi_3Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_4Bedroom.csv"),
   	d3.csv("/data/State_Zhvi_5BedroomOrMore.csv"),
-  	d3.csv("/data/forecast_total.csv")
+  	d3.csv("/data/forecast_total_5.csv")
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
 		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi, forecasts]) => {
 
@@ -329,8 +329,6 @@ Promise.all([
       
       var forecast_data = forecasts.find(x=> (x.State==state && x["Room Size"] == bedroom_mapping[bedroom_type]))
 
-
-
       forecast_data = Object.entries(forecast_data).map(([key, value]) => ({"date": timeConv3(key), "value": value, "type":"predicted"}))
 
       forecast_data.splice(0, 2)
@@ -454,7 +452,7 @@ Promise.all([
 				year_data_2 = []
 
 				array.forEach(function(time_dict){
-					if (time_dict.date.slice(-4) == yearSelected && time_dict.value != ""){
+					if (time_dict.date.slice(-2) == yearSelected.slice(-2) && time_dict.value != ""){
 						year_data_2.push(time_dict.value)
 					}
 				})

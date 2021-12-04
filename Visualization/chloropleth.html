@@ -166,12 +166,14 @@ Promise.all([
 				if (document.getElementById("selectYear").value == 2020 || 
 					document.getElementById("selectYear").value == 2021){
 
-					console.log("year")
+					var popup = svg.append("svg")
+				    .attr("id", "message")
+				    .attr("transform", "translate(" + (300) + "," + margin.top + ")")
 
-					d3.select("body").append("text")
+				  popup.append("text")
 				    .attr("text-anchor", "middle")
 				    .style("font-size", "12px")
-				    .text("POPUP TEXT")
+				    .text("MESSAGE")
 				}
 			})
 
@@ -312,7 +314,6 @@ Promise.all([
       obs_data = obs_data.filter(function(d) {
 				return d.date >= d3.timeParse("%Y-%m-%d")("2007-1-1");
 			})
-			console.log(forecasts)
       
       var forecast_data = forecasts.find(x=> (x.State==state && x["Room Size"] == bedroom_mapping[bedroom_type]))
 
@@ -494,7 +495,6 @@ Promise.all([
 
 			var map = svg.append("svg")
 				.attr("id", "map")
-				.attr("transform", "translate(" + 0 + "," + 100 + ")")
 
 			map.selectAll("path")
 	      .data(world.features)
@@ -544,10 +544,15 @@ Promise.all([
 
 		  var w = 140, h = 300;
 
-			var key = map.append("svg")
+			var key = map.append("g")
 				.attr("width", w)
-				.attr("height", h)
-				.attr("class", "legend");
+				.attr("height", h + 100)
+				.attr("class", "legend")
+				.attr("transform", "translate(" + (10) + "," + (25) + ")");
+
+			key.append("text")
+				.text("Property median price in USD:")
+				.style("font-size", "12px")
 
 			var legend = key.append("defs")
 				.append("svg:linearGradient")
@@ -584,6 +589,19 @@ Promise.all([
 				.attr("class", "y axis")
 				.attr("transform", "translate(41,10)")
 				.call(yAxis)
+
+			key.append("text")
+				.text(function(){
+					year = d3.select("#selectYear").property("value")
+					if (year>= 2020){
+						return "* Data from " + year + " is forecasted"
+					}
+					else {
+						return ""
+					}
+				})
+				.style("font-size", "14px")
+				.attr("transform", "translate(" + 0 + "," + (h+40) + ")")
 
 		}
 

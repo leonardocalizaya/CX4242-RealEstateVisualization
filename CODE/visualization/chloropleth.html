@@ -130,17 +130,17 @@ var svg_linecharts = d3.select("body")
 // Load in my states data!
 Promise.all([
   	d3.json("/visualization/us-states.json"),
-  	d3.csv("/data/State_MedianRentalPrice_1Bedroom.csv"),
-  	d3.csv("/data/State_MedianRentalPrice_2Bedroom.csv"),
-  	d3.csv("/data/State_MedianRentalPrice_3Bedroom.csv"),
-  	d3.csv("/data/State_MedianRentalPrice_4Bedroom.csv"),
-  	d3.csv("/data/State_MedianRentalPrice_5BedroomOrMore.csv"),
-  	d3.csv("/data/State_Zhvi_1Bedroom.csv"),
-  	d3.csv("/data/State_Zhvi_2Bedroom.csv"),
-  	d3.csv("/data/State_Zhvi_3Bedroom.csv"),
-  	d3.csv("/data/State_Zhvi_4Bedroom.csv"),
-  	d3.csv("/data/State_Zhvi_5BedroomOrMore.csv"),
-  	d3.csv("/data/forecast_total_5.csv")
+  	d3.csv("/CODE/data/State_MedianRentalPrice_1Bedroom.csv"),
+  	d3.csv("/CODE/data/State_MedianRentalPrice_2Bedroom.csv"),
+  	d3.csv("/CODE/data/State_MedianRentalPrice_3Bedroom.csv"),
+  	d3.csv("/CODE/data/State_MedianRentalPrice_4Bedroom.csv"),
+  	d3.csv("/CODE/data/State_MedianRentalPrice_5BedroomOrMore.csv"),
+  	d3.csv("/CODE/data/State_Zhvi_1Bedroom.csv"),
+  	d3.csv("/CODE/data/State_Zhvi_2Bedroom.csv"),
+  	d3.csv("/CODE/data/State_Zhvi_3Bedroom.csv"),
+  	d3.csv("/CODE/data/State_Zhvi_4Bedroom.csv"),
+  	d3.csv("/CODE/data/State_Zhvi_5BedroomOrMore.csv"),
+  	d3.csv("/CODE/arima_final/forecast_total.csv")
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
 		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi, forecasts]) => {
 
@@ -562,7 +562,7 @@ Promise.all([
         .attr("fill", ramp(dc_value))
         .attr("cx", projection(["-77.0319595", "38.8903694"])[0])
         .attr("cy", projection(["-77.0319595", "38.8903694"])[1])
-        .attr("r", 10.5)
+        .attr("r", 9.8)
         .on("mouseover", function(){
         	d3.select(this).style("fill", "steelblue")
         	createLinechart_zhvi("District of Columbia")

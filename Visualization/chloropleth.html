@@ -193,7 +193,7 @@ Promise.all([
     reColorMap()
 
     //Creates linechart for historial median prices
-   	function createLinechart_rental(world) {
+   	function createLinechart_rental(state) {
 
       var linechart = svg_linecharts.append("svg")
         .attr("id", "linechart")
@@ -201,8 +201,6 @@ Promise.all([
         .attr("height", lcheight + margin.bottom + 40)
 
       var bedroom_type = document.getElementById("selectBedroom").value
-
-      var state = world.properties.NAME
 
       var g = linechart.append("g")
   			.attr("transform", "translate(" + 520 + "," + 0 + ")")
@@ -300,7 +298,7 @@ Promise.all([
         .style("text-anchor", "middle")
     }
 
-    function createLinechart_zhvi(world) {
+    function createLinechart_zhvi(state) {
 
       var linechart_zhvi = svg_linecharts.append("svg")
         .attr("id", "linechart2")
@@ -310,8 +308,6 @@ Promise.all([
 
       
       var bedroom_type = document.getElementById("selectBedroom").value
-
-      var state = world.properties.NAME
 
       var data = zhvi_dict[bedroom_type].find(x=> x.RegionName === state)
 
@@ -523,8 +519,8 @@ Promise.all([
 	      })
 	      .on("mouseover", function(d) {
 	      	d3.select(this).style("fill", "steelblue")
-	      	createLinechart_rental(d)
-	      	createLinechart_zhvi(d)
+	      	createLinechart_rental(d.properties.NAME)
+	      	createLinechart_zhvi(d.properties.NAME)
 
 		      var x = d3.event.x,
 				  y = d3.event.y;
@@ -536,6 +532,7 @@ Promise.all([
 				  tooltip.html(html);
 				  tooltip.style("top", y + "px");
 				  tooltip.style("left", x + "px");
+
 				  tooltip.show();
 	      })
 	      .on("mouseout", function(d){
@@ -551,6 +548,52 @@ Promise.all([
 	      	linechart2.remove()
 					tooltip.hide()
 	      })
+
+	    //District of columbia is very small compared to other states,
+	    //we will make a manual circle with the same features as a normal state.  
+
+	    dc_data = world.features.find(x=> x.properties.NAME === "District of Columbia")
+
+	    dc_value = dc_data.properties.zhvi
+	    dc_rent = dc_data.properties.rent
+
+	  	washington_dc = map.append("circle")
+        .attr("class", "dot")
+        .attr("fill", ramp(dc_value))
+        .attr("cx", projection(["-77.0319595", "38.8903694"])[0])
+        .attr("cy", projection(["-77.0319595", "38.8903694"])[1])
+        .attr("r", 10.5)
+        .on("mouseover", function(){
+        	d3.select(this).style("fill", "steelblue")
+        	createLinechart_zhvi("District of Columbia")
+        	createLinechart_rental ("District of Columbia")
+
+        	var x = d3.event.x,
+				  y = d3.event.y;
+				  var html = "State: " + "District of Columbia";
+				  html += "\nMedian Rental Price: " + Math.round(dc_rent) + "";
+				  html += "\nMedian Property Price: " + Math.round(dc_value) + "";
+				  tooltip.html(html);
+				  tooltip.style("top", y + "px");
+				  tooltip.style("left", x + "px");
+
+				  tooltip.show();
+        })
+        .on("mouseout", function(){
+        	tooltip.hide()
+        	linechart.remove()
+        	linechart2.remove()
+
+        	d3.select(this).style("fill", function(d){
+	      		if (dc_value == undefined){
+	      		return "#808080"
+		      	}
+		      	else{
+		      		return ramp(dc_value)
+		      	}
+	      	})
+        })
+
 
 		  var w = 140, h = 300;
 

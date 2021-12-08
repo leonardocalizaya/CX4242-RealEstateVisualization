@@ -10,3 +10,10 @@ Once the CX4242-Housing directory is on your machine, you will need to run a htt
 
 EXECUTION:
 The user may select the year and number of bedrooms that they are interested in. The default when the tool is opened is 1 bedroom in the year 2010. When the user hovers their mouse over any state, a tooltip should appear displaying the state name, median rental price, and median property price for that year and number of bedrooms. There also should appear two line charts below the map when the mouse hovers over a state showing the time-series data for these two variables including our model's predictions for future months. The user may select a future year from the dropdown to see a forecasted chloropleth map. We suggest that the user should choose several different combinations of year and number of bedrooms to start getting a feel for the data and how the web tool works. The most expensive states according to the user's parameters are always shown in dark green while the least expensive states are showin in light green. When there is no data that state will appear gray.  
+
+DEMO:
+https://www.youtube.com/watch?v=5Y-NjrOu8vA&ab_channel=MichaelCho
+
+City_data:
+https://drive.google.com/drive/folders/1Uwbfgghemsf_fQbzvBXBux_4wEawY8mx?usp=sharing
+This link contains city data sets and city housing price prediction. City forecast data can be obtained through ARIMA Forecast_city.ipynb through the same way that was describe in the demo video to obtain the state forecast data.

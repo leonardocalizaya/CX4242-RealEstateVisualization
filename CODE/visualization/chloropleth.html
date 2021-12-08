@@ -140,7 +140,7 @@ Promise.all([
   	d3.csv("/CODE/data/State_Zhvi_3Bedroom.csv"),
   	d3.csv("/CODE/data/State_Zhvi_4Bedroom.csv"),
   	d3.csv("/CODE/data/State_Zhvi_5BedroomOrMore.csv"),
-  	d3.csv("/CODE/arima_final/forecast_total.csv")
+  	d3.csv("/CODE/arima_model/forecast_total.csv")
 	]).then(([world, one_bed, two_bed, three_bed, four_bed, five_bed,
 		one_bed_zhvi, two_bed_zhvi, three_bed_zhvi, four_bed_zhvi, five_bed_zhvi, forecasts]) => {
 
